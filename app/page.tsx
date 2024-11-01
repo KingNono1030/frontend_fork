@@ -1,4 +1,5 @@
-import Image from "next/image";
+import Image from 'next/image'
 
 export default function Home() {
-  return <>홈페이지</>}
+  return <>홈페이지</>
+}
