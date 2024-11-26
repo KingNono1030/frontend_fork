@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL
+
 export const POST = async (req: Request): Promise<NextResponse> => {
   const { email, password } = await req.json()
-  const response = await fetch('http://43.202.50.174:8080/v1/auth/sign-in', {
+  const response = await fetch(`${BACKEND_BASE_URL}/v1/auth/sign-in`, {
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
     body: JSON.stringify({ email, password }),
@@ -33,7 +35,7 @@ export const POST = async (req: Request): Promise<NextResponse> => {
     secure: true,
     sameSite: 'strict',
     path: '/',
-    maxAge: 86400,
+    maxAge: 1209600,
   })
 
   return res

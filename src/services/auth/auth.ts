@@ -10,3 +10,4 @@ export const SignUp = async (data: SignUpRequest): Promise<Response> => {
     body: JSON.stringify(data),
   })
 }
+ 
