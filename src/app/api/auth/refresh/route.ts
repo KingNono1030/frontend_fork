@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 
-import { backendApi } from '@/services/api'
+import { HTTPError } from 'ky'
 
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL
+import { backendApi } from '@/services/api'
 
 export const POST = async (req: Request): Promise<NextResponse> => {
   const { refreshToken } = await req.json()
@@ -12,10 +12,9 @@ export const POST = async (req: Request): Promise<NextResponse> => {
       .post('refresh', { json: { refreshToken } })
       .json<{ accessToken: string }>()
     return NextResponse.json({ success: true, accessToken })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('토큰 갱신 에러:', error)
-
-    if (error.response) {
+    if (error instanceof HTTPError) {
       const errorData = await error.response.json()
       return NextResponse.json(
         {
@@ -25,7 +24,6 @@ export const POST = async (req: Request): Promise<NextResponse> => {
         { status: error.response.status }
       )
     }
-
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }
