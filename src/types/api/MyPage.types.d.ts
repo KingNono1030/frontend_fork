@@ -23,8 +23,44 @@ export interface GetProfileResponse extends ProfileBase, User {
 /*
 PATCH:  마이페이지 프로필 저장
 */
-export type ProfileUpdateRequest = ProfileBase
+export type ProfileUpdateRequest = MultipartFormData<ProfileBase>
 
 export interface ProfileUpdateResponse extends ProfileBase {
   completionRate?: number // 포트폴리오 완성률 (%)
 }
+
+/*
+path: '/v1/my-page/check-nickname'
+POST: 닉네임 중복 체크
+*/
+export interface CheckNicknameRequest {
+  nickname: Nickname // 닉네임 중복 검사 대상
+}
+
+export type CheckNicknameResponse = boolean
+
+/*
+PasswordUpdateResponse
+{
+  "isSuccess": true,
+  "code": "COMMON200",
+  "message": "비밀번호 수정이 완료되었습니다."
+}
+*/
+
+/*
+path: '/v1/my-page/password'
+PATCH: 마이 페이지 비밀번호 수정
+*/
+export interface PasswordUpdateRequest {
+  password: Password // 새 비밀번호
+}
+
+/*
+PasswordUpdateResponse
+{
+  "isSuccess": true,
+  "code": "COMMON200",
+  "message": "비밀번호 수정이 완료되었습니다."
+}
+*/
