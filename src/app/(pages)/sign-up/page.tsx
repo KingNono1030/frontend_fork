@@ -4,7 +4,8 @@
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { SignUpRequest } from '@/types/api/Auth.types'
-import { useSignUpMutation } from 'queries/useSignUp'
+
+import { useSignUpMutation } from '@/queries/auth'
 
 export default function SignUpPage(): JSX.Element {
   // const router = useRouter()
