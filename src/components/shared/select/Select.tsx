@@ -9,7 +9,7 @@ import { CheckboxInput, TextInput } from '@/components/common/input'
 
 interface SelectContextType {
   options: Option[]
-  selectedValues: string[]
+  selectedValues: Set<string>
   searchTerm: string
   isMulti: boolean
   setSearchTerm: (value: string) => void
@@ -46,7 +46,7 @@ export const Select = ({
   children,
   disabled = false,
 }: SelectProps): JSX.Element => {
-  const [selectedValues, setSelectedValues] = useState<string[]>([])
+  const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState<string>('')
 
   const filteredOptions = options.filter(option =>
@@ -55,19 +55,27 @@ export const Select = ({
 
   const toggleValue = (value: string) => {
     setSelectedValues(prev => {
-      const newValues = prev.includes(value)
-        ? prev.filter(v => v !== value)
-        : isMulti
-          ? [...prev, value]
-          : [value]
-      if (JSON.stringify(newValues) !== JSON.stringify(prev)) {
-        onChange(newValues)
+      const newValues = new Set(prev)
+
+      if (newValues.has(value)) {
+        newValues.delete(value)
+      } else {
+        if (isMulti) {
+          newValues.add(value)
+        } else {
+          return new Set([value])
+        }
       }
+
+      if (JSON.stringify([...newValues]) !== JSON.stringify([...prev])) {
+        onChange([...newValues])
+      }
+
       return newValues
     })
   }
 
-  const isSelected = (value: string) => selectedValues.includes(value)
+  const isSelected = (value: string) => selectedValues.has(value)
 
   return (
     <SelectContext.Provider
@@ -100,17 +108,18 @@ const Trigger = ({
 
   const { selectedValues, isMulti, options, disabled } = useSelectContext()
   const selectedLabel = isMulti
-    ? selectedValues.length
-      ? `${selectedValues[0]}` +
-        (selectedValues.length > 1 ? ` 외 ${selectedValues.length - 1}개` : '')
+    ? selectedValues.size
+      ? `${selectedValues.values().next().value}` +
+        (selectedValues.size > 1 ? ` 외 ${selectedValues.size - 1}개` : '')
       : ''
-    : options.find(o => o.value === selectedValues[0])?.label || ''
+    : options.find(o => o.value === selectedValues.values().next().value)
+        ?.label || ''
   const triggerStyle = cn({
     'pointer-events-none cursor-not-allowed': disabled,
   })
   const triggerBoxClass = cn(
     'h-48 w-210 justify-between p-12 text-body1 font-medium text-gray-500 focus:border-primary-normal',
-    { 'text-gray-800': selectedValues.length },
+    { 'text-gray-800': selectedValues.size },
     { 'bg-gray-200 text-gray-400': disabled },
     className
   )
