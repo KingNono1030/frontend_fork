@@ -6,7 +6,7 @@ import { toggleCheckbox } from '@/utils/toggleCheckbox'
 
 export interface CheckboxInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string
+  label: string | React.ReactNode
   variant: 'checkbox' | 'check'
 }
 
@@ -59,6 +59,7 @@ export const CheckboxInput = ({
     disabled && 'cursor-not-allowed opacity-50'
   )
   const labelTextClass = cn(className)
+
   return (
     <label className={labelClass}>
       <input
@@ -71,6 +72,7 @@ export const CheckboxInput = ({
       />
       <span
         role='checkbox'
+        type='button'
         tabIndex={0}
         aria-checked={checked}
         aria-label={'checkbox button'}
