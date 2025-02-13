@@ -1,61 +1,32 @@
-import { useState } from 'react'
+'use client'
+
+import { useParams } from 'next/navigation'
 
 import {
-  IcAnswerBlue,
   IcBin,
   IcComment,
   IcEdit,
   IcEyeOpen,
   IcHeart,
-  IcPencil,
   IcPeopleMinus,
   IcPeoplePlus,
-  IcSearch,
   IcShare,
 } from '@/assets/IconList'
 import { recruitmentStatusMap } from '@/constants/stateToLabelMaps'
-import { cn } from '@/lib/utils'
 import { TeamRecruitmentListItem, TeamType } from '@/types/api/Team.types'
-import parse from 'html-react-parser'
 
 import { Avatar } from '@/components/common/avatar'
 import { Button, Clickable } from '@/components/common/button'
 import { Chip } from '@/components/common/chip'
-import { Box, Container, Grid } from '@/components/common/containers'
+import { Box, Container } from '@/components/common/containers'
 import { Divider } from '@/components/common/divider'
-import { TextInput } from '@/components/common/input'
-import { Switch } from '@/components/common/switch/Switch'
 import { Highlight, Text } from '@/components/common/text'
-import { Pagination } from '@/components/shared/pagination'
-import { Select } from '@/components/shared/select'
-import { CareerSelect } from '@/components/shared/select/CareerSelect'
-import { TeamRecruitmentCard } from '@/components/team/TeamRecruitmentCard'
-
-import { usePagination } from '@/hooks/usePagination'
-import { useToggle } from '@/hooks/useToggle'
-
-const stackOptions = [
-  { label: '자바스크립트', value: 'Javascript' },
-  { label: 'Css', value: 'Css' },
-  { label: 'HTML', value: 'HTML' },
-  { label: '타입스크립트', value: 'Typescript' },
-]
-const positionOptions = [
-  { label: '프론트엔드', value: 'frontend' },
-  { label: '백엔드', value: 'backend' },
-  { label: '풀스택', value: 'fullstack' },
-]
+import { ContentViewer } from '@/components/shared/contentViewer'
 
 const teamTypeMap: Record<TeamType, string> = {
   STUDY: '스터디',
   MENTORING: '멘토링',
   PROJECT: '프로젝트',
-}
-
-interface TeamDetailPageProps {
-  params: {
-    id: string
-  }
 }
 
 const dummyTeamRecruitment: TeamRecruitmentListItem = {
@@ -80,10 +51,10 @@ const dummyTeamRecruitment: TeamRecruitmentListItem = {
   teamTechStack: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
   teamTags: ['사이드프로젝트', '실무경험', '포트폴리오'],
 }
-export default async function TeamDetailPage({
-  params,
-}: TeamDetailPageProps): Promise<JSX.Element> {
-  const { id } = await params
+export default function TeamDetailPage(): JSX.Element {
+  const params = useParams<{ id: string }>()
+  const { id } = params
+  console.log(id)
   const data = dummyTeamRecruitment
   const {
     teamIsActive,
@@ -99,7 +70,6 @@ export default async function TeamDetailPage({
     answers,
     likes,
     createdAt,
-    updatedAt,
   } = data
 
   return (
@@ -159,7 +129,7 @@ export default async function TeamDetailPage({
             </Highlight>
           </Text.Title>
         </div>
-        <div className='tiptap mb-20'>{parse(teamContent)}</div>
+        <ContentViewer content={teamContent} />
         <div className='mb-12 flex gap-10'>
           {teamTags.map((tag: string) => (
             <Chip key={tag} label={`#${tag}`} />
@@ -260,5 +230,3 @@ export default async function TeamDetailPage({
     </Container>
   )
 }
-
-// ...

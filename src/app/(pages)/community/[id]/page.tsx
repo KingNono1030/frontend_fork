@@ -1,80 +1,24 @@
-import { useState } from 'react'
+'use client'
+
+import { useParams } from 'next/navigation'
 
 import {
-  IcAnswerBlue,
   IcBin,
   IcComment,
   IcEdit,
   IcEyeOpen,
   IcHeart,
-  IcPencil,
-  IcPeopleMinus,
-  IcPeoplePlus,
-  IcSearch,
   IcShare,
 } from '@/assets/IconList'
-import { recruitmentStatusMap } from '@/constants/stateToLabelMaps'
-import { cn } from '@/lib/utils'
 import { CommunityDetail } from '@/types/api/Community.types'
-import { TeamRecruitmentListItem, TeamType } from '@/types/api/Team.types'
-import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
-import { Highlight as TiptapHighlight } from '@tiptap/extension-highlight'
-import SubScript from '@tiptap/extension-subscript'
-import { Superscript } from '@tiptap/extension-superscript'
-import { TextAlign } from '@tiptap/extension-text-align'
-import { TextStyle } from '@tiptap/extension-text-style'
-import { Underline } from '@tiptap/extension-underline'
-import { StarterKit } from '@tiptap/starter-kit'
-import hljs from 'highlight.js'
-import bash from 'highlight.js/lib/languages/bash'
-import css from 'highlight.js/lib/languages/css'
-import js from 'highlight.js/lib/languages/javascript'
-import json from 'highlight.js/lib/languages/json'
-import ts from 'highlight.js/lib/languages/typescript'
-import html from 'highlight.js/lib/languages/xml'
-import 'highlight.js/styles/github.css'
-import parse, { Element } from 'html-react-parser'
-import { all, createLowlight } from 'lowlight'
 
 import { Avatar } from '@/components/common/avatar'
 import { Button, Clickable } from '@/components/common/button'
 import { Chip } from '@/components/common/chip'
-import { Box, Container, Grid } from '@/components/common/containers'
+import { Container } from '@/components/common/containers'
 import { Divider } from '@/components/common/divider'
-import { TextInput } from '@/components/common/input'
-import { Switch } from '@/components/common/switch/Switch'
-import { Highlight, Text } from '@/components/common/text'
-import { Pagination } from '@/components/shared/pagination'
-import { Select } from '@/components/shared/select'
-import { CareerSelect } from '@/components/shared/select/CareerSelect'
-import { TeamRecruitmentCard } from '@/components/team/TeamRecruitmentCard'
-
-import { usePagination } from '@/hooks/usePagination'
-import { useToggle } from '@/hooks/useToggle'
-
-const stackOptions = [
-  { label: '자바스크립트', value: 'Javascript' },
-  { label: 'Css', value: 'Css' },
-  { label: 'HTML', value: 'HTML' },
-  { label: '타입스크립트', value: 'Typescript' },
-]
-const positionOptions = [
-  { label: '프론트엔드', value: 'frontend' },
-  { label: '백엔드', value: 'backend' },
-  { label: '풀스택', value: 'fullstack' },
-]
-
-const teamTypeMap: Record<TeamType, string> = {
-  STUDY: '스터디',
-  MENTORING: '멘토링',
-  PROJECT: '프로젝트',
-}
-
-interface CommunityDetailPageProps {
-  params: {
-    id: string
-  }
-}
+import { Text } from '@/components/common/text'
+import { ContentViewer } from '@/components/shared/contentViewer'
 
 const dummyCommunityDetail: CommunityDetail = {
   id: 1,
@@ -133,21 +77,12 @@ const useToggle = ({ initialValue = false }: UseToggleProps) => {
   isComment: true,
 }
 
-// create a lowlight instance with all languages loaded
-const lowlight = createLowlight(all)
+export default function CommunityDetailPage(): JSX.Element {
+  const params = useParams<{ id: string }>()
 
-// Register specific languages
-lowlight.register('html', html)
-lowlight.register('css', css)
-lowlight.register('js', js)
-lowlight.register('ts', ts)
-lowlight.register('json', json)
-lowlight.register('bash', bash)
+  const { id } = params
+  console.log(id)
 
-export default async function CommunityDetailPage({
-  params,
-}: CommunityDetailPageProps): Promise<JSX.Element> {
-  const { id } = await params
   const data = dummyCommunityDetail
   const {
     communityTitle,
@@ -168,35 +103,6 @@ export default async function CommunityDetailPage({
   }
 
   // HTML 파싱 옵션 설정
-  const options = {
-    replace: domNode => {
-      if (
-        domNode instanceof Element &&
-        domNode.name === 'code' &&
-        domNode.attribs.class
-      ) {
-        // language-xxx 형식에서 언어 추출
-        const language = domNode.attribs.class.replace('language-', '')
-        try {
-          // 코드 내용 하이라이팅
-          const highlightedCode = hljs.highlight(
-            domNode.children[0].data || '',
-            { language }
-          ).value
-
-          return (
-            <code
-              className={domNode.attribs.class}
-              dangerouslySetInnerHTML={{ __html: highlightedCode }}
-            />
-          )
-        } catch (e) {
-          // 하이라이팅 실패 시 원본 반환
-          return domNode
-        }
-      }
-    },
-  }
 
   return (
     <Container className='mx-auto my-80 flex flex-col gap-20'>
@@ -234,7 +140,7 @@ export default async function CommunityDetailPage({
             {communityTitle}
           </Text.Heading>
         </div>
-        <div className='tiptap mb-20'>{parse(communityContent, options)}</div>
+        <ContentViewer content={communityContent} />
         <div className='flex items-center gap-8'>
           {isComment && (
             <Clickable
@@ -291,5 +197,3 @@ export default async function CommunityDetailPage({
     </Container>
   )
 }
-
-// ...
