@@ -1,5 +1,7 @@
 'use client'
 
+import { useParams } from 'next/navigation'
+
 import { Controller, useForm } from 'react-hook-form'
 
 import {
@@ -7,9 +9,11 @@ import {
   teamTypeOptions,
   techStackOptions,
 } from '@/constants/selectOptions'
-import { TEAM_RECRUITMENT_EDITOR_CONTENT } from '@/constants/tiptap'
 import { TipTapEditor } from '@/lib/tiptap/TipTapEditor'
-import { CreateTeamRecruitmentRequest } from '@/types/api/Team.types'
+import {
+  GetTeamRecruitmentResponse,
+  UpdateTeamRecruitmentRequest,
+} from '@/types/api/Team.types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
@@ -21,7 +25,7 @@ import { Text } from '@/components/common/text'
 import { Form } from '@/components/shared/form'
 import { Select } from '@/components/shared/select'
 
-import { useCreateTeamRecruitment } from '@/queries/team'
+import { useTeamRecruitment, useUpdateTeamRecruitment } from '@/queries/team'
 
 const MIN_RECRUIT_NUMBER = 1
 const MAX_RECRUIT_NUMBER = 10
@@ -54,25 +58,51 @@ const createTeamSchema = z.object({
     .optional(),
 })
 
-export default function CreateTeamPage(): JSX.Element {
-  const { mutate } = useCreateTeamRecruitment()
+export default function UpdateTeamPage(): JSX.Element {
+  const params = useParams<{ id: string }>()
+  const teamId = Number(params.id)
 
-  const methods = useForm<CreateTeamRecruitmentRequest>({
+  const { data: teamDetail, isLoading, isError } = useTeamRecruitment(teamId)
+  const {
+    teamTitle,
+    teamContent,
+    teamPosition,
+    teamTechStack,
+    teamTags,
+    teamRecruitmentNum,
+    teamType,
+  } = (teamDetail as GetTeamRecruitmentResponse) ?? {
+    teamTitle: '',
+    teamContent: '',
+    teamPosition: '',
+    teamTechStack: [],
+    teamTags: [],
+  }
+
+  const { mutate } = useUpdateTeamRecruitment(teamId)
+
+  const methods = useForm<UpdateTeamRecruitmentRequest>({
     mode: 'onBlur',
     resolver: zodResolver(createTeamSchema),
     defaultValues: {
-      teamTitle: '',
-      teamContent: '',
-      teamPosition: '',
-      teamTechStack: [],
-      teamTags: [],
+      teamTitle,
+      teamContent,
+      teamPosition,
+      teamTechStack,
+      teamTags,
+      teamRecruitmentNum,
+      teamType,
     },
   })
+
   const { handleSubmit, control } = methods
-  const onSubmit = (data: CreateTeamRecruitmentRequest) => {
+  const onSubmit = (data: UpdateTeamRecruitmentRequest) => {
     console.log(data)
     mutate(data)
   }
+
+  if (isLoading) return <div>d</div>
+  if (isError) return <div>d</div>
 
   return (
     <Container className='mx-auto my-80 flex flex-col gap-40'>
@@ -165,10 +195,7 @@ export default function CreateTeamPage(): JSX.Element {
             defaultValue={''}
             render={({ field: { onChange }, fieldState: { error } }) => (
               <div>
-                <TipTapEditor
-                  content={TEAM_RECRUITMENT_EDITOR_CONTENT}
-                  onChange={onChange}
-                />
+                <TipTapEditor content={teamContent} onChange={onChange} />
                 {error?.message && (
                   <Form.Message hasError={!!error}>
                     {error.message}
@@ -236,10 +263,10 @@ export default function CreateTeamPage(): JSX.Element {
           />
         </Label>
         <div className='flex justify-end gap-10'>
-          <Link variant='outlined' href='/team'>
+          <Link variant='outlined' href={`/team/${teamId}`}>
             취소
           </Link>
-          <Button type='submit'>등록하기</Button>
+          <Button type='submit'>수정하기</Button>
         </div>
       </Form>
     </Container>

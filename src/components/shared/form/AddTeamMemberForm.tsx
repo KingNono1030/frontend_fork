@@ -41,15 +41,9 @@ export const AddTeamMemberForm = (): JSX.Element => {
   const methods = useForm()
   const { handleSubmit, control, watch } = methods
   const values = watch()
-  const onSubmit = (data: any) => console.log(data)
 
   return (
-    <Form
-      id='addTeamMember'
-      methods={methods}
-      onSubmit={handleSubmit(onSubmit)}
-      className='w-full'
-    >
+    <Form id='addTeamMember' methods={methods} className='w-full'>
       <div className='flex flex-col gap-4'>
         <Label labelText='닉네임' />
         <Controller
