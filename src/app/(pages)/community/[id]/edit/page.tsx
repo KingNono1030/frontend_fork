@@ -1,11 +1,16 @@
 'use client'
 
+import { useParams } from 'next/navigation'
+
 import { Controller, useForm } from 'react-hook-form'
 
 import { commuintyCategoryOptions } from '@/constants/selectOptions'
-import { COMMUNITY_EDITOR_CONTENT } from '@/constants/tiptap'
 import { TipTapEditor } from '@/lib/tiptap/TipTapEditor'
-import { CreateCommunityRequest } from '@/types/api/Community.types'
+import {
+  CreateCommunityRequest,
+  GetCommunityDetailResponse,
+  UpdateCommunityRequest,
+} from '@/types/api/Community.types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
@@ -16,7 +21,11 @@ import { Text } from '@/components/common/text'
 import { Form } from '@/components/shared/form'
 import { Select } from '@/components/shared/select'
 
-import { useCreateCommunity } from '@/queries/community'
+import {
+  useCommunity,
+  useCreateCommunity,
+  useUpdateCommunity,
+} from '@/queries/community'
 
 const createCommunitySchema = z.object({
   communityTitle: z.string().nonempty('제목을 입력해주세요.'),
@@ -27,22 +36,42 @@ const createCommunitySchema = z.object({
   isComment: z.boolean().optional(),
 })
 
-export default function CreateCommunityPage(): JSX.Element {
-  const { mutate } = useCreateCommunity()
+export default function UpdateCommunityPage(): JSX.Element {
+  const params = useParams<{ id: string }>()
+  const communityId = Number(params.id)
+
+  const {
+    data: communityDetail,
+    isLoading,
+    isError,
+  } = useCommunity(communityId)
+
+  const { communityTitle, communityContent, communityCategory, isComment } =
+    (communityDetail as GetCommunityDetailResponse) ?? {
+      communityTitle: '',
+      communityContent: '',
+      isComment: false,
+    }
+
+  const { mutate } = useUpdateCommunity(communityId)
 
   const methods = useForm<CreateCommunityRequest>({
     mode: 'onBlur',
     resolver: zodResolver(createCommunitySchema),
     defaultValues: {
-      communityTitle: '',
-      communityContent: '',
-      isComment: false,
+      communityTitle,
+      communityContent,
+      isComment,
+      communityCategory,
     },
   })
   const { handleSubmit, control } = methods
-  const onSubmit = (data: CreateCommunityRequest) => {
+  const onSubmit = (data: UpdateCommunityRequest) => {
     mutate(data)
   }
+
+  if (isLoading) return <div>d</div>
+  if (isError) return <div>d</div>
 
   return (
     <Container className='mx-auto my-80 flex flex-col gap-40'>
@@ -103,13 +132,10 @@ export default function CreateCommunityPage(): JSX.Element {
           <Controller
             name='communityContent'
             control={control}
-            defaultValue={''}
+            defaultValue={communityContent}
             render={({ field: { onChange }, fieldState: { error } }) => (
               <div>
-                <TipTapEditor
-                  content={COMMUNITY_EDITOR_CONTENT}
-                  onChange={onChange}
-                />
+                <TipTapEditor content={communityContent} onChange={onChange} />
                 {error?.message && (
                   <Form.Message hasError={!!error}>
                     {error.message}
@@ -134,7 +160,7 @@ export default function CreateCommunityPage(): JSX.Element {
           <Link variant='outlined' href='/community'>
             취소
           </Link>
-          <Button type='submit'>등록하기</Button>
+          <Button type='submit'>수정하기</Button>
         </div>
       </Form>
     </Container>
