@@ -1,18 +1,26 @@
+import { ApiResponse } from '@/types/api/ApiResponse.types'
 import {
   AccessTokenResponse,
+  CheckEmailRequest,
   CheckEmailResponse,
   SignInRequest,
+  SignInResponse,
   SignUpRequest,
+  SignUpResponse,
   TokenApiResponse,
 } from '@/types/api/Auth.types'
 
 import { backendApi, proxyApi } from '@/services/api'
 
-export const SignUp = async (data: SignUpRequest): Promise<Response> => {
+export const SignUp = async (
+  data: SignUpRequest
+): Promise<ApiResponse<SignUpResponse>> => {
   return await backendApi.post(`v1/auth/sign-up`, { json: data }).json()
 }
 
-export const SignIn = async (data: SignInRequest): Promise<Response> => {
+export const SignIn = async (
+  data: SignInRequest
+): Promise<ApiResponse<SignInResponse>> => {
   return await proxyApi.post(`api/auth/sign-in`, { json: data }).json()
 }
 
@@ -44,7 +52,7 @@ export const requestNewToken = async (
  * @returns 이메일 사용 가능 여부 (true: 사용 가능, false: 중복)
  */
 export const checkEmailDuplication = async (
-  email: string
-): Promise<CheckEmailResponse> => {
+  email: CheckEmailRequest
+): Promise<ApiResponse> => {
   return await backendApi.post(`v1/auth/check-email`, { json: email }).json()
 }

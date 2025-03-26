@@ -1,10 +1,15 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { PORTFOLIO_EDITOR_CONTENT } from '@/constants/tiptap'
 import { TipTapEditor } from '@/lib/tiptap/TipTapEditor'
 import { CreatePortfolioRequest } from '@/types/api/Portfolio.types'
+
+import { authProxy } from '@/app/api/auth/authProxy'
 
 import { Button, Link } from '@/components/common/button'
 import { Container } from '@/components/common/containers'
@@ -37,23 +42,50 @@ export default function CreatePortfolioPage(): JSX.Element {
     },
   })
   const { handleSubmit, control, watch } = methods
-  const onSubmit = (data: CreatePortfolioRequest) => {
-    console.log(data)
-  }
-  const values = watch()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const test = () => {
-    console.log('------- 테스트 테스트 -------')
-    console.log('portTitle ' + values.request.portTitle)
-    console.log('portContent ' + values.request.portContent)
-    console.log('portPosition ' + values.request.portPosition)
-    console.log('techStacks ' + values.request.techStacks)
-    console.dir(values.request.educations)
-    console.dir(values.request.awards)
-    console.dir(values.request.careers)
-    console.log('links ', values.request.links)
-    console.log('tags ' + values.request.tags)
-    console.dir(values.file)
+  const updateProfile = async (
+    data: CreatePortfolioRequest,
+    profileImage?: File
+  ): Promise<ApiResponse> => {
+    const formData = new FormData()
+    formData.append(
+      'request',
+      new Blob([JSON.stringify(data)], { type: 'application/json' })
+    )
+
+    if (profileImage) {
+      formData.append('profileImage', profileImage)
+    }
+
+    return await authProxy
+      .post('v1/portfolio', {
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .json()
+  }
+
+  const onSubmit = async (data: CreatePortfolioRequest) => {
+    setIsLoading(true)
+    try {
+      const file = data.file instanceof FileList ? data.file[0] : undefined
+      const response = await updateProfile(data, file)
+
+      if (response.isSuccess) {
+        router.push('/portfolio')
+      } else {
+        alert(response.message || '포트폴리오 등록에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('포트폴리오 등록 중 오류 발생:', error)
+      alert('포트폴리오 등록 중 오류가 발생했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -115,30 +147,14 @@ export default function CreatePortfolioPage(): JSX.Element {
             텍스트는 줄 바꿈은 엔터(Enter)를 통해 구분합니다.
           </Text.Caption>
         </div>
-        <Label labelText='태그' className='mb-20'>
-          <Form.TagInput
-            name='request.tags'
-            placeholder='태그를 입력하고 엔터를 눌러주세요. 태그 최대 개수는 10개입니다.'
-          />
-        </Label>
-        <div className='mb-40 flex flex-col gap-8'>
-          <Label labelText='대표 이미지 등록' />
-          <Form.File name='file' />
-          <Text.Caption variant='caption1' color='gray500'>
-            포트폴리오 리스트에 보여지는 썸네일입니다. 미등록 시 기본썸네일로
-            적용 됩니다.
-            <br />
-            760*480 이상 / jpeg, jpg, png 형식을 권장합니다.
-          </Text.Caption>
-        </div>
         <div className='flex justify-end gap-10'>
           <Link variant='outlined' href='/team'>
             취소
           </Link>
-          <Button type='submit'>등록하기</Button>
-          <Button onClick={test}>테스트</Button>
+          <Button type='submit' disabled={isLoading}>
+            {isLoading ? '등록 중...' : '등록하기'}
+          </Button>
         </div>
-        <div className='w-full'></div>
       </Form>
     </Container>
   )

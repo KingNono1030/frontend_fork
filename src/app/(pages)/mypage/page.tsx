@@ -1,9 +1,13 @@
 'use client'
 
+import Image from 'next/image'
+
+import { useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { IcProfile, IcProfileCard } from '@/assets/IconList'
 import { positionOptions, techStackOptions } from '@/constants/selectOptions'
+import { AffiliationType, UpdateProfileRequest } from '@/types/api/MyPage.types'
 
 import { Button } from '@/components/common/button'
 import { DeletableChip } from '@/components/common/chip'
@@ -13,41 +17,73 @@ import { Text } from '@/components/common/text'
 import { Form } from '@/components/shared/form'
 import { Select } from '@/components/shared/select'
 
-interface FormValues {
-  name: string
-  nickname: string
-  introduction: string
-  gitHub: string
-  position: string[]
-  techStacks: string[]
-  affiliation: string
-}
+import { useAuthStore } from '@/stores/useAuthStore'
+
+import { getProfile, updateProfile } from '@/services/mypage'
 
 export default function MyPage(): JSX.Element {
-  const methods = useForm<FormValues>({
+  const { user } = useAuthStore()
+
+  const methods = useForm<UpdateProfileRequest>({
     mode: 'onChange',
     defaultValues: {
-      name: '',
-      nickname: '',
-      introduction: '',
-      gitHub: '',
-      position: [],
-      techStacks: [],
-      affiliation: '',
+      request: {
+        imageUrl: '',
+        nickname: user?.nickname,
+        introduction: '',
+        gitHub: '',
+        affiliation: 'COMPANY_SCHOOL',
+      },
     },
   })
 
-  const { control } = methods
-
-  const onSubmit = (data: FormValues) => {
-    console.log('Form Submitted:', data)
-  }
+  const { control, watch } = methods
+  const values = watch()
 
   const affiliationOptions = [
     { label: '회사 ‧ 학교', value: 'COMPANY_SCHOOL' },
     { label: '프리랜서', value: 'FREELANCER' },
     { label: '기타', value: 'OTHER' },
   ]
+
+  const testApiCall = async () => {
+    try {
+      const response = await getProfile()
+      console.log('getProfile API 결과:', response.result)
+    } catch (error) {
+      console.error('API 호출 에러:', error)
+    }
+  }
+
+  const [preview, setPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => setPreview(reader.result as string)
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const onSubmit = async (data: UpdateProfileRequest) => {
+    if (!fileInputRef.current?.files?.[0]) {
+      return
+    }
+
+    try {
+      const profileImage = fileInputRef.current.files[0] || null
+      const response = await updateProfile(data, profileImage)
+      console.log('프로필 업데이트 성공:', response)
+    } catch (error) {
+      console.error('프로필 업데이트 실패:', error)
+    }
+  }
 
   return (
     <div className='h-auto max-w-954'>
@@ -57,6 +93,12 @@ export default function MyPage(): JSX.Element {
       <Text.Body variant='body2' color='gray600' className='pb-20'>
         기본 정보 및 프로필을 설정할 수 있습니다.
       </Text.Body>
+
+      <div className='mb-20'>
+        <Button variant='contained' onClick={testApiCall}>
+          API 테스트
+        </Button>
+      </div>
 
       <div className='w-954 rounded-12 bg-common-white p-40'>
         <div className='flex flex-row gap-x-20 pb-20'>
@@ -87,17 +129,54 @@ export default function MyPage(): JSX.Element {
         <Form methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
           <div className='mb-20 flex flex-row gap-x-60'>
             <Label labelText='프로필 사진' className='w-146' />
-            <div className='flex gap-x-20'>
-              <button>
-                <IcProfile width='60' height='60' />
+            <div className='flex items-center gap-x-20'>
+              <button onClick={handleButtonClick}>
+                {preview ? (
+                  <div className='h-60 w-60 overflow-hidden rounded-full'>
+                    <Image
+                      src={preview}
+                      alt='프로필 이미지'
+                      width={60}
+                      height={60}
+                      className='h-full w-full object-cover'
+                    />
+                  </div>
+                ) : (
+                  <IcProfile width='60' height='60' />
+                )}
               </button>
-              <Button variant='outlined'>프로필 변경</Button>
+              <Button variant='outlined' onClick={handleButtonClick}>
+                프로필 변경
+              </Button>
+              <input
+                type='file'
+                accept='image/*'
+                ref={fileInputRef}
+                className='hidden'
+                onChange={handleFileChange}
+              />
             </div>
           </div>
+
           <div className='mb-20 flex flex-row gap-x-60'>
             <Label labelText='이름' className='w-146' />
             <div className='w-500'>
-              <Form.Text name='name' className='h-48' />
+              <Form.Text
+                name='request.name'
+                className='h-48 text-gray-500'
+                disabled
+              />
+            </div>
+          </div>
+
+          <div className='mb-20 flex flex-row gap-x-60'>
+            <Label labelText='이메일' className='w-146' />
+            <div className='w-500'>
+              <Form.Text
+                name='request.email'
+                className='h-48 text-gray-500'
+                disabled
+              />
             </div>
           </div>
 
@@ -109,14 +188,14 @@ export default function MyPage(): JSX.Element {
           <div className='mb-20 flex flex-row gap-x-60'>
             <Label labelText='닉네임' className='w-146' />
             <div className='w-500'>
-              <Form.Text name='nickname' className='h-48' />
+              <Form.Text name='request.nickname' className='h-48' />
             </div>
           </div>
 
           <div className='mb-20 flex flex-row gap-x-60'>
             <Label labelText='소개' className='w-146' />
             <div className='w-500'>
-              <Form.TextArea size='sm' name='introduction' fullWidth />
+              <Form.TextArea size='sm' name='request.introduction' fullWidth />
             </div>
           </div>
 
@@ -126,7 +205,7 @@ export default function MyPage(): JSX.Element {
               <Text.Body variant='body2' color='gray500'>
                 https://github.com/
               </Text.Body>
-              <Form.Text name='gitHub' placeholder='입력' />
+              <Form.Text name='request.gitHub' placeholder='입력' />
             </div>
           </div>
 
@@ -141,12 +220,11 @@ export default function MyPage(): JSX.Element {
             커리어
           </Text.Heading>
 
-          <div className='mb-20 flex flex-row items-center gap-x-60'>
+          {/* <div className='mb-20 flex flex-row items-center gap-x-60'>
             <Label labelText='포지션' className='h-48 w-146' />
             <Controller
               name='position'
               control={control}
-              rules={{ required: '기술 스택을 선택해주세요.' }}
               render={({ field, fieldState: { error } }) => (
                 <div>
                   <Select
@@ -193,7 +271,6 @@ export default function MyPage(): JSX.Element {
             <Controller
               name='techStacks'
               control={control}
-              rules={{ required: '기술 스택을 선택해주세요.' }}
               render={({ field, fieldState: { error } }) => (
                 <div>
                   <Select
@@ -233,12 +310,13 @@ export default function MyPage(): JSX.Element {
                 </div>
               )}
             />
-          </div>
+          </div> */}
+
           <div className='mb-40 flex gap-x-60'>
             <Label labelText='소속' className='w-146' />
             <div className='flex w-500 gap-x-40'>
               <Form.Radio
-                name='affiliation'
+                name='request.affiliation'
                 options={affiliationOptions}
                 rules={{ required: '소속을 선택해주세요.' }}
               />
@@ -248,8 +326,11 @@ export default function MyPage(): JSX.Element {
             <Button size='lg' className='bg-semantic-negative'>
               회원 탈퇴
             </Button>
-            <Button size='lg' disabled>
+            <Button size='lg' type='submit'>
               프로필 저장
+            </Button>
+            <Button size='lg' onClick={() => console.log(values)}>
+              테스트
             </Button>
           </div>
         </Form>
