@@ -1,23 +1,23 @@
-import { GetCommunityListQuery } from '@/types/api/Community.types'
+import { GetProjectListQuery } from '@/types/api/Project.types'
 
-type FilterState = GetCommunityListQuery
+type FilterState = GetProjectListQuery
 
 type FilterAction =
   | { type: 'SET_SEARCH_TERM'; payload: FilterState['searchTerm'] }
   | { type: 'SET_SORT_BY'; payload: FilterState['sortBy'] }
-  | { type: 'SET_CATEGORY'; payload: FilterState['category'] }
+  | { type: 'SET_CATEGORY'; payload: FilterState['projectCategory'] }
   | { type: 'SET_PAGE'; payload: FilterState['page'] }
   | { type: 'RESET_FILTERS' }
 
-export const communityListFilterInitialState: FilterState = {
+export const projectListFilterInitialState: FilterState = {
   searchTerm: '',
   sortBy: 'recent',
-  category: '',
+  projectCategory: '',
   page: 1,
-  size: 10,
+  size: 5,
 }
 
-export const communityListFilterReducer = (
+export const projectListFilterReducer = (
   state: FilterState,
   action: FilterAction
 ): FilterState => {
@@ -27,7 +27,7 @@ export const communityListFilterReducer = (
     case 'SET_SORT_BY':
       return { ...state, sortBy: action.payload }
     case 'SET_CATEGORY':
-      return { ...state, category: action.payload }
+      return { ...state, projectCategory: action.payload }
     case 'SET_PAGE':
       return { ...state, page: action.payload }
     default:
